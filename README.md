@@ -9,10 +9,14 @@
 </p>
 
 <p align="center">
-  <a href="#-quick-start-windows"><img src="https://img.shields.io/badge/platform-Windows%20%7C%20Docker-0b1f3a" alt="Platform"></a>
+  <a href="https://chromewebstore.google.com/detail/ai-cyber-shield/abjkmnhefajbjoklpddbdkekpannjhga"><img src="https://img.shields.io/badge/Chrome%20Web%20Store-Add%20to%20Chrome-3ab0ff?logo=googlechrome&logoColor=white" alt="Chrome Web Store"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-3ab0ff" alt="License"></a>
   <a href="#-authorized-testing-only"><img src="https://img.shields.io/badge/use-authorized%20testing%20only-f5a623" alt="Authorized use only"></a>
   <img src="https://img.shields.io/badge/AI-bring%20your%20own%20key-2ecc71" alt="BYO key">
+</p>
+
+<p align="center">
+  <strong>▶ Install the extension from the <a href="https://chromewebstore.google.com/detail/ai-cyber-shield/abjkmnhefajbjoklpddbdkekpannjhga">Chrome Web Store</a></strong>
 </p>
 
 ---
@@ -70,9 +74,13 @@ First run generates local secrets, builds the container (downloads Kali + the to
 
 ### 2. Install the extension
 
+**Easiest — from the Chrome Web Store:** [Add AI Cyber Shield to Chrome](https://chromewebstore.google.com/detail/ai-cyber-shield/abjkmnhefajbjoklpddbdkekpannjhga).
+
+**Or load it from source** (for development):
 1. Open `chrome://extensions`, enable **Developer mode**.
 2. **Load unpacked** → select the `extension` folder.
-3. In the extension's **Local Harness** settings, paste the Server URL and Token.
+
+Then open the extension's **Local Harness** settings and paste the Server URL and Token from step 1.
 
 ### 3. Run an assessment
 
