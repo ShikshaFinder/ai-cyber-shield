@@ -1,0 +1,8 @@
+AI Cyber Shield
+Copyright 2026 Harsh Jani
+
+This product includes software developed as part of the AI Cyber Shield project.
+Licensed under the Apache License, Version 2.0.
+
+Bundled third-party security tools (nmap, nuclei, sqlmap, etc.) and dependencies
+retain their own respective licenses.

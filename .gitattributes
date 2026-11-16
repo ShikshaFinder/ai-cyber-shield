@@ -1,0 +1,6 @@
+# Keep LF on files that run inside the Linux container / shells.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary

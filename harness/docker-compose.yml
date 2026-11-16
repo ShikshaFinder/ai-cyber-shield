@@ -1,0 +1,24 @@
+name: ai-cyber-shield
+
+services:
+  harness:
+    build: .
+    image: ai-cyber-shield-harness:local
+    env_file: .env
+    ports:
+      # Bound to localhost only: nothing on your network can reach the harness.
+      - "127.0.0.1:${SHIELD_GATEWAY_PORT:-7878}:7878"
+      - "127.0.0.1:${SHIELD_OPENCODE_PORT:-4096}:4096"
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    extra_hosts:
+      # Lets you scan dev servers running on your own PC as http://host.docker.internal:<port>
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data:/workspace/data
+      - opencode-state:/home/shield/.local/share/opencode
+    restart: unless-stopped
+
+volumes:
+  opencode-state:

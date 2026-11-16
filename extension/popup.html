@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>BugBounty Capture Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 380px;
+            min-height: 500px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+            color: #e0e0e0;
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 16px;
+            margin: 8px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+            padding: 24px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .content {
+            padding: 24px 20px;
+        }
+
+        .control-section {
+            margin-bottom: 24px;
+        }
+
+        .control-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-section h3::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+            border-radius: 2px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 0, 0, 0.4);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 0, 0, 0.6);
+            background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            border: none;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 0, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #333333 0%, #1a1a1a 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 0, 0, 0.3);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, #ff0000 0%, #990000 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 0, 0, 0.4);
+            border: none;
+        }
+
+        .btn-purple:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 0, 0, 0.6);
+            background: linear-gradient(135deg, #cc0000 0%, #660000 100%);
+        }
+
+        .btn-navigation {
+            background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            border: none;
+        }
+
+        .btn-navigation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 0, 0, 0.4);
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+        }
+
+        .btn:disabled {
+            background: #cccccc;
+            color: #666666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            border: none;
+        }
+
+        .btn:disabled::before {
+            display: none;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #cccccc;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.active {
+            background: #ff0000;
+            box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+        }
+
+        .status-dot.inactive {
+            background: #666666;
+            box-shadow: 0 0 0 0 rgba(102, 102, 102, 0.7);
+        }
+
+        .status-dot.loading {
+            background: #ff0000;
+            box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+            animation: loading-pulse 1s infinite;
+        }
+
+        @keyframes loading-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+            }
+
+            50% {
+                box-shadow: 0 0 0 5px rgba(255, 0, 0, 0.3);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+            }
+        }
+
+        .status-text {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #cccccc;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ff0000;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #000000;
+            margin-top: 2px;
+        }
+
+        .download-section {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #000000;
+            border: 1px solid #cccccc;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 6px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #ff0000;
+            box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.2);
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .navigation-section {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #cccccc;
+            color: #000000;
+        }
+
+        .section-description {
+            font-size: 11px;
+            color: #333333;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            padding: 12px 20px;
+            text-align: center;
+            border-top: 1px solid #333333;
+        }
+
+        .footer-text {
+            font-size: 10px;
+            color: #ffffff;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Success/Error messages */
+        .message {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Cloud Detection Styles */
+        .cloud-section {
+            background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #333333;
+        }
+
+        .cloud-section h3 {
+            margin-bottom: 8px;
+            font-size: 16px;
+            color: #ff0000;
+        }
+
+        .cloud-section .section-description {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 12px;
+        }
+
+        .cloud-section .stat-item {
+            background: rgba(255, 0, 0, 0.15);
+            border: 1px solid #666666;
+            color: white;
+        }
+
+        .cloud-section .stat-value {
+            color: #ff0000;
+        }
+
+        .cloud-section .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .cloud-provider-info {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255, 0, 0, 0.1);
+            border-radius: 8px;
+            border: 1px solid #666666;
+        }
+
+        .provider-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #ff0000;
+        }
+
+        .provider-services {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>BugBounty Capture Agent</h2>
+            <p>Professional Web Request Analysis Tool</p>
+        </div>
+
+        <div class="content">
+            <!-- Control Section -->
+            <div class="control-section">
+                <h3>Capture Controls</h3>
+                <div class="button-group">
+                    <button id="start" class="btn btn-primary">Start Capture</button>
+                    <button id="stop" class="btn btn-danger" disabled>Stop & Send</button>
+                </div>
+            </div>
+
+            <!-- Status Section -->
+            <div class="status-card">
+                <div class="status-indicator">
+                    <div id="statusDot" class="status-dot inactive"></div>
+                    <span id="status" class="status-text">Not Capturing</span>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span id="requestCount" class="stat-value">0</span>
+                        <span class="stat-label">Requests</span>
+                    </div>
+                    <div class="stat-item">
+                        <span id="lastCapture" class="stat-value">Never</span>
+                        <span class="stat-label">Last Capture</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cloud Detection Section -->
+            <div class="cloud-section">
+                <h3> Cloud Services Detected</h3>
+                <p class="section-description">
+                    Identifies which cloud platforms and services your application is using
+                </p>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span id="cloudCount" class="stat-value">0</span>
+                        <span class="stat-label">Cloud Requests</span>
+                    </div>
+                    <div class="stat-item">
+                        <span id="cloudPercentage" class="stat-value">0%</span>
+                        <span class="stat-label">Cloud Usage</span>
+                    </div>
+                </div>
+                <div id="topProvider" class="cloud-provider-info" style="display: none;">
+                    <div class="provider-name"></div>
+                    <div class="provider-services"></div>
+                </div>
+            </div>
+
+            <!-- Download Section -->
+            <div class="download-section">
+                <h3>Download Reports</h3>
+                <p class="section-description">
+                    Export captured data optimized for AI agent analysis
+                </p>
+                <div class="input-group">
+                    <label for="filename">Filename</label>
+                    <input type="text" id="filename" class="input-field"
+                        placeholder="Enter filename (e.g., capture_2024)" value="capture_">
+                </div>
+                <div class="download-buttons">
+                    <button id="downloadCategorized" class="btn btn-primary" disabled style="width: 100%;">
+                         Download Categorized Files (AI Ready)
+                    </button>
+                </div>
+                <p class="section-description" style="margin-top: 8px; font-size: 10px; color: #666;">
+                    Categorized download creates 17 specialized files including cookies, APIs, vulnerabilities, and more - optimized for AI agent analysis.
+                </p>
+            </div>
+
+            <!-- Local Harness Section -->
+            <div class="download-section">
+                <h3>Local Harness</h3>
+                <p class="section-description">
+                    Send the capture to your local AI Cyber Shield harness for analysis. Authorized targets only.
+                </p>
+                <div class="input-group">
+                    <label for="harnessUrl">Server URL</label>
+                    <input type="text" id="harnessUrl" class="input-field"
+                        placeholder="http://localhost:7878" value="http://localhost:7878">
+                </div>
+                <div class="input-group">
+                    <label for="harnessToken">Token</label>
+                    <input type="password" id="harnessToken" class="input-field"
+                        placeholder="Token from start.ps1">
+                </div>
+                <div class="input-group">
+                    <label for="scanMode">Mode</label>
+                    <select id="scanMode" class="input-field">
+                        <option value="passive">Passive (analyze capture only)</option>
+                        <option value="active">Active (test in-scope hosts)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="scanScope">Scope (one host, *.domain, IP or CIDR per line)</label>
+                    <textarea id="scanScope" class="input-field" rows="2"
+                        placeholder="example.com"></textarea>
+                </div>
+                <div class="download-buttons">
+                    <button id="saveHarness" class="btn btn-navigation" style="width: 100%; margin-bottom: 6px;">
+                        Save Settings
+                    </button>
+                    <button id="sendToHarness" class="btn btn-primary" disabled style="width: 100%;">
+                        Send to Harness &amp; Scan
+                    </button>
+                </div>
+                <p id="harnessStatus" class="section-description" style="margin-top: 8px; font-size: 11px;"></p>
+            </div>
+
+            <!-- Navigation Section -->
+            <div class="navigation-section">
+                <h3>Navigation</h3>
+                <p class="section-description">
+                    Return to the main AICyberShield platform for additional tools and resources
+                </p>
+                <button id="goBack" class="btn btn-navigation">
+                    Go Back to AICyberShield
+                </button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p class="footer-text">Powered by AICyberShield , Professional Security Analysis</p>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

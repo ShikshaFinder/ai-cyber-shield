@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""Scope guard for AI Cyber Shield.
+
+Defense-in-depth wrapper for network tools. The real tools live in /usr/bin; this wrapper is placed
+earlier on PATH under the same names (via symlinks). Before running a tool it extracts the targets from
+the command line, resolves them, and refuses if any target is not covered by data/scope.txt.
+
+This is a guardrail against mistakes and prompt drift, not a security sandbox — it reduces, not eliminates,
+the chance of touching an unauthorized host. Keep it; do not route around it.
+"""
+from __future__ import annotations
+
+import ipaddress
+import os
+import re
+import socket
+import sys
+from pathlib import Path
+from urllib.parse import urlparse
+
+WORKSPACE = Path(os.environ.get("SHIELD_HOME", "/workspace"))
+SCOPE_FILE = WORKSPACE / "data" / "scope.txt"
+# Directory holding the guard symlinks; it is first on PATH. The real tools are found
+# by searching the rest of PATH, so no binaries need to be moved.
+GUARD_DIR = os.environ.get("SHIELD_GUARD_DIR", "/opt/shield/guardbin")
+
+ALWAYS_LOCAL = {"localhost", "127.0.0.1", "::1", "host.docker.internal"}
+
+
+def load_scope() -> list[str]:
+    if not SCOPE_FILE.is_file():
+        return []
+    out = []
+    for line in SCOPE_FILE.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            out.append(line.lower())
+    return out
+
+
+def resolve_ips(host: str) -> set[str]:
+    try:
+        infos = socket.getaddrinfo(host, None)
+        return {i[4][0] for i in infos}
+    except Exception:
+        return set()
+
+
+def host_in_scope(host: str, scope: list[str]) -> bool:
+    host = host.lower().strip(".")
+    if not host:
+        return True
+    if host in ALWAYS_LOCAL:
+        return True
+
+    host_ips: set[str] | None = None
+    for entry in scope:
+        if entry.startswith("*."):
+            suffix = entry[1:]  # ".example.com"
+            if host == entry[2:] or host.endswith(suffix):
+                return True
+            continue
+        if entry == host:
+            return True
+        # CIDR / IP scope entries
+        try:
+            net = ipaddress.ip_network(entry, strict=False)
+        except ValueError:
+            continue
+        if host_ips is None:
+            host_ips = resolve_ips(host)
+        for ip in host_ips:
+            try:
+                if ipaddress.ip_address(ip) in net:
+                    return True
+            except ValueError:
+                pass
+    return False
+
+
+TOKEN_IS_HOST = re.compile(r"^[A-Za-z0-9.-]+$")
+
+
+def extract_targets(args: list[str]) -> list[str]:
+    targets: list[str] = []
+    for tok in args:
+        if tok.startswith("-"):
+            continue
+        candidate = tok
+        if "://" in tok:
+            candidate = urlparse(tok).hostname or ""
+        elif tok.startswith("www.") or ("." in tok and TOKEN_IS_HOST.match(tok)):
+            candidate = tok.split("/")[0].split(":")[0]
+        else:
+            continue
+        if candidate:
+            targets.append(candidate)
+    return targets
+
+
+def main() -> int:
+    tool = os.path.basename(sys.argv[0])
+    args = sys.argv[1:]
+    scope = load_scope()
+    targets = extract_targets(args)
+
+    if targets:
+        if not scope:
+            sys.stderr.write(
+                f"[scope-guard] refusing {tool}: no scope defined in {SCOPE_FILE}. "
+                f"Add authorized targets (one host, *.domain, IP or CIDR per line).\n"
+            )
+            return 3
+        for t in targets:
+            if not host_in_scope(t, scope):
+                sys.stderr.write(
+                    f"[scope-guard] refusing {tool}: target '{t}' is out of scope. "
+                    f"Only authorized, in-scope hosts may be tested.\n"
+                )
+                return 3
+
+    real = find_real_tool(tool)
+    if not real:
+        sys.stderr.write(f"[scope-guard] real tool not found for {tool}\n")
+        return 127
+    os.execv(real, [real] + args)
+    return 0  # unreachable
+
+
+def find_real_tool(tool: str) -> str | None:
+    guard = os.path.realpath(GUARD_DIR)
+    for d in os.environ.get("PATH", "").split(os.pathsep):
+        if not d or os.path.realpath(d) == guard:
+            continue
+        cand = os.path.join(d, tool)
+        if os.path.isfile(cand) and os.access(cand, os.X_OK):
+            return cand
+    return None
+
+
+if __name__ == "__main__":
+    sys.exit(main())
